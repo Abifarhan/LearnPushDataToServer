@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), UploadRequestBody.UploadCallback {
                 file.name,
                 body
             ),
-            RequestBody.create(MediaType.parse("multipart/form-data"), "json")
+//            RequestBody.create(MediaType.parse("multipart/form-data"), "json")
         ).enqueue(object : Callback<UploadResponse> {
             override fun onFailure(call: Call<UploadResponse>, t: Throwable) {
                 binding.layoutRoot.snackbar(t.message!!)

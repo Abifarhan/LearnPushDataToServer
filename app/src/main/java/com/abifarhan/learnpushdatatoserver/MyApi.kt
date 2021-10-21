@@ -16,7 +16,7 @@ interface MyApi {
     @PUT("contact/upload")
     fun uploadImage(
         @Part image: MultipartBody.Part,
-        @Part("desc") desc: RequestBody
+//        @Part("photo") desc: RequestBody
     ) : Call<UploadResponse>
 
     companion object{
