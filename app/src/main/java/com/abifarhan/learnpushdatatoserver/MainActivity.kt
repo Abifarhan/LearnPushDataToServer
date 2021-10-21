@@ -1,11 +1,14 @@
 package com.abifarhan.learnpushdatatoserver
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Button
+import com.abifarhan.learnpushdatatoserver.databinding.ActivityMainBinding
 import okhttp3.MultipartBody
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -17,28 +20,52 @@ import okhttp3.RequestBody
 
 
 class MainActivity : AppCompatActivity() {
+
+    private var _binding: ActivityMainBinding? = null
+    private val binding get() = _binding!!
+
+    private var selectedImageUri: Uri? = null
+
+    companion object{
+        const val REQUEST_CODE_PICK_IMAGE = 101
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val btn = findViewById<Button>(R.id.btn_take_image)
+        binding.imageView.setOnClickListener {
+            openImageChooser()
+        }
 
-        btn.setOnClickListener {
-            val intent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
-            startActivityForResult(intent, 110)
+        binding.buttonUpload.setOnClickListener {
+            uploadImage()
+        }
+    }
+
+    private fun uploadImage() {
+
+    }
+
+    private fun openImageChooser() {
+
+        Intent(Intent.ACTION_PICK).also {
+            it.type = "image/*"
+            val mimeTypes = arrayOf("image/jpeg", "image/png")
+            it.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            startActivityForResult(it, REQUEST_CODE_PICK_IMAGE)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 110 && resultCode == RESULT_OK) {
-
-            val bitmap = data!!.extras!!.get("data") as Bitmap
-
-//            val requestFile = File(bitmap.toString()).
-//            val file = convertToFile(bitmap)
-//
-            uploadImagetoServer(bitmap.toString())
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                REQUEST_CODE_PICK_IMAGE -> {
+                    selectedImageUri = data?.data
+                    binding.imageView.setImageURI(selectedImageUri)
+                }
+            }
         }
     }
 
