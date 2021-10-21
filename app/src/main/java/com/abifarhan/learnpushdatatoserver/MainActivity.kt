@@ -7,19 +7,19 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.widget.Button
 import com.abifarhan.learnpushdatatoserver.databinding.ActivityMainBinding
+import okhttp3.MediaType
 import okhttp3.MultipartBody
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.*
 
 
-
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), UploadRequestBody.UploadCallback {
 
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
@@ -45,6 +45,45 @@ class MainActivity : AppCompatActivity() {
 
     private fun uploadImage() {
 
+        if (selectedImageUri == null) {
+            binding.layoutRoot.snackbar("Select an Image First")
+            return
+        }
+
+        val parcelFileDescriptor =
+            contentResolver.openFileDescriptor(selectedImageUri!!, "r", null) ?: return
+
+        val inputStream = FileInputStream(parcelFileDescriptor.fileDescriptor)
+        val file = File(cacheDir, contentResolver.getFileName(selectedImageUri!!))
+        val outputStream = FileOutputStream(file)
+        inputStream.copyTo(outputStream)
+
+        binding.progressBar.progress = 0
+        val body = UploadRequestBody(file, "photo", this)
+        MyApi().uploadImage(
+            MultipartBody.Part.createFormData(
+                "photo",
+                file.name,
+                body
+            ),
+            RequestBody.create(MediaType.parse("multipart/form-data"), "json")
+        ).enqueue(object : Callback<UploadResponse> {
+            override fun onFailure(call: Call<UploadResponse>, t: Throwable) {
+                binding.layoutRoot.snackbar(t.message!!)
+                Log.d("this","gagal upload photo karena ${t.localizedMessage}")
+                binding.progressBar.progress = 0
+            }
+
+            override fun onResponse(
+                call: Call<UploadResponse>,
+                response: Response<UploadResponse>
+            ) {
+                response.body()?.let {
+                    binding.layoutRoot.snackbar(it.message)
+                    binding.progressBar.progress = 100
+                }
+            }
+        })
     }
 
     private fun openImageChooser() {
@@ -95,5 +134,9 @@ class MainActivity : AppCompatActivity() {
 
 
         return file
+    }
+
+    override fun onProgressUpdate(percentage: Int) {
+//        TODO("Not yet implemented")
     }
 }
